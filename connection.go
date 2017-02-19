@@ -36,11 +36,11 @@ func main() {
 }
 
 //Protokoll
-//0-20: ??
-//20-23: Acc nr
-//24: pwlen
-//25: wat?
-//26: pw-pwlen
+//0-19: ??
+//19-22: Acc nr
+//23: pwlen
+//24: wat?
+//25: pw-pwlen
 
 func handleRequest(con net.Conn) {
 	buf := make([]byte, 1024)
@@ -50,12 +50,18 @@ func handleRequest(con net.Conn) {
 	if err != nil {
 		fmt.Println("Error reading: ", err.Error());
 	}
-
+	var recvstr string = string(buf[:reqLen])
+	var pwlen uint8 = uint8(buf[23])
+	var acc_num uint32 = binary.LittleEndian.Uint32(buf[19:23])
+	var pass = string(buf[25:25+pwlen])
 	fmt.Println("Message received. Bytes: ", reqLen)
-	fmt.Println(binary.LittleEndian.Uint32(buf[19:23]))
-	fmt.Println(string(buf[:reqLen]))
+	fmt.Println("String: ", recvstr)
+	fmt.Println("PW len: ", pwlen)
+	fmt.Println("Acc: ", acc_num); 
+	fmt.Println("Pass: ", pass)
 	fmt.Println(buf);
 
+	con.Write(
 	con.Close();
 
 }
