@@ -35,10 +35,9 @@ func main() {
 }
 
 func handleRequest(con net.Conn) {
-	client := Client{socket: con}
-	addr := client.socket.RemoteAddr()
-	fmt.Printf("Remote connection from %s accepted\n", addr.String())
-	client.msg = newMessage(con)
+	client := NewClient(con)
+	fmt.Printf("Remote connection from %s accepted\n", client.remoteAddr())
+	client.receive()
 	client.loginProtocol()
 
 
