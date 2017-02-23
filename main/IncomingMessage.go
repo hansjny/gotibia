@@ -27,7 +27,7 @@ func (m *IncomingMessage) newMessage(con net.Conn) {
 }
 
 func (m *IncomingMessage) readStr(strlen int) string {
-	var data string = string(m.data[m.pos:m.pos+strlen+1])
+	var data string = string(m.data[m.pos:m.pos+strlen])
 	m.pos += strlen
 	return data
 }
