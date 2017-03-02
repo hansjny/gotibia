@@ -10,7 +10,15 @@ import (
 	"os"
 )
 
+type World struct {
+	Name string
+	Id int
+	Port int
+	Ip string
+}
+
 var G_DB *sql.DB
+var WORLDLIST []World
 
 /* Server initialization procedure */
 func main() {
@@ -18,6 +26,7 @@ func main() {
 	fmt.Println("::::::::::::::::::: GoTibia 7.3 ::::::::::::::::::")
 	loadPrint("MySql connection", connectDb())
 	account.G_DB = G_DB
+	loadPrint("Loading worlds",  loadWorlds())
 	fmt.Printf("%-*s", 40, ":: Setting up TCP socket")
 	err := connectTcpSocket()
 	if (err != nil) {
@@ -37,6 +46,31 @@ func loadPrint(msg string, err error) {
 	fmt.Printf("%*s", 20, color.GreenString("[ OK ]\n"))
 }
 
+func loadWorlds() error {
+	rows,  err := G_DB.Query("SELECT * FROM worlds")
+
+	if err != nil {
+		fmt.Println("Something went wrong,  loadWorlds()")
+		return err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var wname string
+		var wid int
+		var wip string
+		var wport int 
+		err := rows.Scan(&wid, &wname, &wip,  &wport)
+		if err != nil {
+			fmt.Println("Something went wrong,  loadWorlds()")
+			return err
+		}
+		w := World{Name: wname,  Id: wid,  Port: wport,  Ip: wip}
+		WORLDLIST = append(WORLDLIST,  w)
+	}
+	return err
+}
 func connectDb() error {
 	db, dberr := sql.Open("mysql", MYSQL_USER + ":"+ MYSQL_PW +
 	"@tcp("+ MYSQL_IP+ ":"+ MYSQL_PORT +")/" + MYSQL_DB)
@@ -84,7 +118,21 @@ func handleRequest(con net.Conn) {
 	client := NewClient(con)
 	fmt.Printf("Remote connection from %s accepted\n", client.remoteAddr())
 	client.receive()
-	client.loginProtocol()
+	msg := client.inBuf;
+	msglen := msg.readUint16()
+	msgtype := msg.readUint8()
+	if (msgtype == 0x1) {
+		msg.skipBytes(2)
+		fmt.Printf("Msglen: %d:, msg type: %d\n", msglen, msgtype)
+		if client.loginProtocol() == nil {
+			fmt.Printf("Wrong account number or password.")
+		}
+	} else {
+
+		fmt.Println("Dumping packet")
+		client.dumpOutputPacket()
+
+	}
 	//account.RequestAccount("195176", "hello")
 	//con.Close()
 }
